@@ -1,0 +1,10 @@
+name: Safari Search (iOS)
+platform: ios
+---
+- open Safari app
+- tap on the address bar
+- type "appium.io"
+- press enter
+- wait: 3
+- verify page has loaded
+- done: 'Safari navigation complete'

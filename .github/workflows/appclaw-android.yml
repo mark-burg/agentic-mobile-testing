@@ -1,0 +1,33 @@
+name: AppClaw — Android
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      flow:
+        description: 'Path to YAML flow file (leave empty to use default)'
+        required: false
+        default: 'flows/android/wifi-settings.yaml'
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run AppClaw flow on Android emulator
+        uses: AppiumTestDistribution/AppClaw@main
+        with:
+          platform: android
+          flow: ${{ github.event.inputs.flow || 'flows/android/wifi-settings.yaml' }}
+          provider: openai
+          api-key: ${{ secrets.OPENAI_API_KEY }}
+          agent-mode: vision
+          android-api-level: '33'
+          android-arch: x86_64
+          android-profile: pixel_6
+          report: true
+          report-name: appclaw-android-report

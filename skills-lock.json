@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "generate-appclaw-flow": {
+      "source": "AppiumTestDistribution/appclaw",
+      "sourceType": "github",
+      "skillPath": "skills/generate-appclaw-flow/SKILL.md",
+      "computedHash": "4cf49107aaedc8bea3a3c396e5c9aa74a32bd1508a6eb56e1a9193be603adceb"
+    },
+    "review-changes": {
+      "source": "AppiumTestDistribution/appclaw",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/review-changes/SKILL.md",
+      "computedHash": "f456738757a9044e85bf119d73d41189d6f7c2b0b4e4ffcebb4c701951049ca9"
+    },
+    "use-appclaw-cli": {
+      "source": "AppiumTestDistribution/appclaw",
+      "sourceType": "github",
+      "skillPath": "skills/use-appclaw-cli/SKILL.md",
+      "computedHash": "0c33df04e2eb841bfb29b06f3ea459933089bc160364d29677ccb760afb6f4c6"
+    }
+  }
+}

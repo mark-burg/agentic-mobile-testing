@@ -1,0 +1,6 @@
+name: Android smoke suite
+platform: android
+parallel: 1
+flows:
+  - flows/android/wifi-settings.yaml
+  - flows/android/youtube-search.yaml

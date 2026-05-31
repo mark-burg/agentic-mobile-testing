@@ -1,0 +1,10 @@
+name: YouTube Search (Android)
+platform: android
+---
+- open YouTube app
+- tap on search icon
+- type "Appium 3.0" in the search bar
+- perform search
+- scroll down until "TestMu" is visible
+- verify first video result is visible
+- done

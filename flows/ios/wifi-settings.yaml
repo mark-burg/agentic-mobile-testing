@@ -1,0 +1,8 @@
+name: Open Settings (iOS)
+platform: ios
+---
+- open Settings app
+- wait: 2
+- tap: 'Wi-Fi'
+- verify Wi-Fi screen is visible
+- done: 'Settings Wi-Fi screen opened'
