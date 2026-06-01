@@ -24,7 +24,7 @@ jobs:
           platform: android
           flow: ${{ github.event.inputs.flow || 'flows/android/wifi-settings.yaml' }}
           provider: openai
-          api-key: ${{ secrets.OPENAI_API_KEY }}
+          api-key: ${{ secrets.LLM_API_KEY }}
           agent-mode: vision
           android-api-level: '33'
           android-arch: x86_64
