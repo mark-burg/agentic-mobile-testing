@@ -61,7 +61,7 @@ jobs:
           LLM_PROVIDER: ${{ vars.LLM_PROVIDER }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}
-          LLM_THINKING: ${{ vars.LLM_THINKING }}
+          LLM_THINKING: ${{ vars.LLM_THINKING || 'off' }}
           AGENT_MODE: ${{ vars.AGENT_MODE }}
           MAX_STEPS: '30'
           STEP_DELAY: ${{ vars.STEP_DELAY }}
