@@ -15,6 +15,9 @@ on:
 jobs:
   android:
     runs-on: ubuntu-latest
+    env:
+      OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL }}
+      VISION_MODE: ${{ vars.VISION_MODE }}
     steps:
       - uses: actions/checkout@v4
 
@@ -23,9 +26,11 @@ jobs:
         with:
           platform: android
           flow: ${{ github.event.inputs.flow || 'flows/android/wifi-settings.yaml' }}
-          provider: openai
+          provider: ${{ vars.LLM_PROVIDER }}
           api-key: ${{ secrets.LLM_API_KEY }}
-          agent-mode: vision
+          model: ${{ vars.LLM_MODEL }}
+          agent-mode: ${{ vars.AGENT_MODE }}
+          step-delay: ${{ vars.STEP_DELAY }}
           android-api-level: '33'
           android-arch: x86_64
           android-profile: pixel_6
