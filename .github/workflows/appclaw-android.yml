@@ -23,13 +23,19 @@ jobs:
 
       # NOTE: We inline the AppClaw action's steps (instead of `uses:
       # AppiumTestDistribution/AppClaw`) so we can pin the transitive
-      # `appium-mcp` dependency. The published action installs `appclaw` and
-      # runs it in one atomic step, and `appclaw@1.3.4` depends on
-      # `appium-mcp: ^1.67.0`. On the CI runner that caret resolves to the old
-      # 1.67.0, whose `appium_session_management` schema expects `capabilities`
-      # as an object (`z.record`), while `appclaw` sends it as a JSON string —
-      # producing "expected record, received string" and a failed session.
-      # Forcing appium-mcp@1.81.4 (string schema) fixes it deterministically.
+      # `appium-mcp` dependency. `appclaw@1.3.4` depends on `appium-mcp: ^1.67.0`,
+      # and the old 1.67.0 `appium_session_management` schema expects
+      # `capabilities` as an object (`z.record`), while `appclaw` sends it as a
+      # JSON string — producing "expected record, received string".
+      #
+      # appclaw resolves the appium-mcp server at runtime in `dist/mcp/client.js`:
+      #   1. PREFERRED: `require.resolve('appium-mcp/package.json')` then spawn
+      #      `node <pkg>/dist/index.js`  → uses whatever is installed (our pin).
+      #   2. FALLBACK (if that resolve throws): spawn `npx --yes appium-mcp@1.67.0`
+      #      → the hardcoded OLD record-schema version.
+      # On the CI runner the resolve takes the FALLBACK branch, so pinning the
+      # installed package alone is NOT enough (it only fixes branch 1). We must
+      # ALSO rewrite the hardcoded fallback version so BOTH branches use 1.81.4.
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -37,15 +43,10 @@ jobs:
 
       - name: Install AppClaw and pin appium-mcp
         shell: bash
-        run: |
-          echo "::group::Installing appclaw@1.3.4"
-          npm install -g appclaw@1.3.4 mjpeg-consumer
-          echo "::endgroup::"
-          echo "::group::Pinning appium-mcp@1.81.4 (string capabilities schema)"
-          cd "$(npm root -g)/appclaw"
-          npm install appium-mcp@1.81.4
-          node -e "console.log('appium-mcp pinned to', require('appium-mcp/package.json').version)"
-          echo "::endgroup::"
+        env:
+          APPCLAW_VERSION: '1.3.4'
+          APPIUM_MCP_VERSION: '1.81.4'
+        run: .github/scripts/install-appclaw.sh
 
       - name: Enable KVM
         shell: bash
@@ -66,6 +67,10 @@ jobs:
           MAX_STEPS: '30'
           STEP_DELAY: ${{ vars.STEP_DELAY }}
           PLATFORM: android
+          # Debug aids if the run fails again: MCP_DEBUG logs every appium-mcp
+          # tool call with its args (so we see the exact capabilities payload
+          # and which server version responds).
+          MCP_DEBUG: '1'
         with:
           api-level: 33
           arch: x86_64
