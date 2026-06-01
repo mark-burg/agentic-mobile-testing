@@ -19,7 +19,7 @@ jobs:
       OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL }}
       VISION_MODE: ${{ vars.VISION_MODE }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Run AppClaw flow on iOS simulator
         uses: AppiumTestDistribution/AppClaw@main
