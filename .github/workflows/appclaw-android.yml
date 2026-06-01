@@ -75,7 +75,10 @@ jobs:
           api-level: 33
           arch: x86_64
           profile: pixel_6
-          target: default
+          # google_apis image gives the Pixel-style Settings UI (with the
+          # consolidated "Internet" entry) the flow taps. The AOSP "default"
+          # image lacks that entry, so step 4 (tap "Internet") finds no element.
+          target: google_apis
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
           script: appclaw --flow "${{ github.event.inputs.flow || 'flows/android/wifi-settings.yaml' }}" --platform android
