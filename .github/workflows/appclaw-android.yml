@@ -21,18 +21,75 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Run AppClaw flow on Android emulator
-        uses: AppiumTestDistribution/AppClaw@6fafa606a6fc8af5bfa8b0957ac5a6dab63304d9 # v1.3.4
+      # NOTE: We inline the AppClaw action's steps (instead of `uses:
+      # AppiumTestDistribution/AppClaw`) so we can pin the transitive
+      # `appium-mcp` dependency. The published action installs `appclaw` and
+      # runs it in one atomic step, and `appclaw@1.3.4` depends on
+      # `appium-mcp: ^1.67.0`. On the CI runner that caret resolves to the old
+      # 1.67.0, whose `appium_session_management` schema expects `capabilities`
+      # as an object (`z.record`), while `appclaw` sends it as a JSON string —
+      # producing "expected record, received string" and a failed session.
+      # Forcing appium-mcp@1.81.4 (string schema) fixes it deterministically.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          platform: android
-          flow: ${{ github.event.inputs.flow || 'flows/android/wifi-settings.yaml' }}
-          provider: ${{ vars.LLM_PROVIDER }}
-          api-key: ${{ secrets.LLM_API_KEY }}
-          model: ${{ vars.LLM_MODEL }}
-          agent-mode: ${{ vars.AGENT_MODE }}
-          step-delay: ${{ vars.STEP_DELAY }}
-          android-api-level: '33'
-          android-arch: x86_64
-          android-profile: pixel_6
-          report: true
-          report-name: appclaw-android-report
+          node-version: '22'
+
+      - name: Install AppClaw and pin appium-mcp
+        shell: bash
+        run: |
+          echo "::group::Installing appclaw@1.3.4"
+          npm install -g appclaw@1.3.4 mjpeg-consumer
+          echo "::endgroup::"
+          echo "::group::Pinning appium-mcp@1.81.4 (string capabilities schema)"
+          cd "$(npm root -g)/appclaw"
+          npm install appium-mcp@1.81.4
+          node -e "console.log('appium-mcp pinned to', require('appium-mcp/package.json').version)"
+          echo "::endgroup::"
+
+      - name: Enable KVM
+        shell: bash
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run AppClaw flow on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          LLM_PROVIDER: ${{ vars.LLM_PROVIDER }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          LLM_THINKING: ${{ vars.LLM_THINKING }}
+          AGENT_MODE: ${{ vars.AGENT_MODE }}
+          MAX_STEPS: '30'
+          STEP_DELAY: ${{ vars.STEP_DELAY }}
+          PLATFORM: android
+        with:
+          api-level: 33
+          arch: x86_64
+          profile: pixel_6
+          target: default
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: appclaw --flow "${{ github.event.inputs.flow || 'flows/android/wifi-settings.yaml' }}" --platform android
+
+      - name: Find report path
+        id: report-path
+        if: always()
+        shell: bash
+        run: |
+          DIR=$(ls -td .appclaw/runs/*/ 2>/dev/null | head -1 || echo "")
+          echo "path=${DIR}" >> $GITHUB_OUTPUT
+          if [ -n "$DIR" ]; then
+            echo "::notice title=AppClaw Report::Report written to ${DIR}"
+          fi
+
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appclaw-android-report
+          path: .appclaw/runs/
+          if-no-files-found: warn
